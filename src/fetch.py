@@ -20,7 +20,7 @@ START = "2015-01-01"
 END = (date.today() - timedelta(days=5)).isoformat()
 
 
-def fetch_weather(city, start, end, retries=5):
+def fetch_weather(city, start, end, retries=6):
     lat, lon = LOCATIONS[city]
     params = {
         "latitude": lat,
@@ -31,24 +31,28 @@ def fetch_weather(city, start, end, retries=5):
         "timezone": "Europe/London",
     }
     for attempt in range(1, retries + 1):
-        response = requests.get(URL, params=params, timeout=30)
-        if response.status_code == 429:
-            wait = 30 * attempt
-            print(f"  Rate limited. Waiting {wait}s (attempt {attempt}/{retries})...")
+        wait = 30 * attempt
+        try:
+            response = requests.get(URL, params=params, timeout=120)
+            if response.status_code == 429 or response.status_code >= 500:
+                print(f"  HTTP {response.status_code}. Waiting {wait}s (attempt {attempt}/{retries})...")
+                time.sleep(wait)
+                continue
+            response.raise_for_status()
+            df = pd.DataFrame(response.json()["daily"])
+            df["city"] = city
+            return df
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            print(f"  {type(e).__name__}. Waiting {wait}s (attempt {attempt}/{retries})...")
             time.sleep(wait)
-            continue
-        response.raise_for_status()
-        df = pd.DataFrame(response.json()["daily"])
-        df["city"] = city
-        return df
-    raise RuntimeError(f"Still rate limited for {city} after {retries} attempts")
+    raise RuntimeError(f"Could not fetch {city} after {retries} attempts")
 
 
 if __name__ == "__main__":
     os.makedirs("data/raw", exist_ok=True)
     frames = []
     for city in LOCATIONS:
-        print(f"Fetching {city}...")
+        print(f"Fetching {city}...", flush=True)
         frames.append(fetch_weather(city, START, END))
         time.sleep(10)  # pause between cities
     data = pd.concat(frames, ignore_index=True)
