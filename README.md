@@ -2,7 +2,7 @@
 
 An interactive Streamlit dashboard exploring 11 years of daily weather across five UK cities, built on an automated pipeline from API extraction to a cloud-hosted app.
 
-**Live app:** [[your-app-url.streamlit.app](https://uk-weather-dashboard-project.streamlit.app/)]
+**Live app:** [[app-url.streamlit.app](https://uk-weather-dashboard-project.streamlit.app/)]
 
 ![Dashboard screenshot](docs/images/dashboard.png)
 
