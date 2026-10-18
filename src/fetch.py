@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import date, timedelta
 
 import pandas as pd
@@ -19,7 +20,7 @@ START = "2015-01-01"
 END = (date.today() - timedelta(days=5)).isoformat()
 
 
-def fetch_weather(city, start, end):
+def fetch_weather(city, start, end, retries=5):
     lat, lon = LOCATIONS[city]
     params = {
         "latitude": lat,
@@ -29,11 +30,18 @@ def fetch_weather(city, start, end):
         "daily": "temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,wind_speed_10m_max",
         "timezone": "Europe/London",
     }
-    response = requests.get(URL, params=params, timeout=30)
-    response.raise_for_status()
-    df = pd.DataFrame(response.json()["daily"])
-    df["city"] = city
-    return df
+    for attempt in range(1, retries + 1):
+        response = requests.get(URL, params=params, timeout=30)
+        if response.status_code == 429:
+            wait = 30 * attempt
+            print(f"  Rate limited. Waiting {wait}s (attempt {attempt}/{retries})...")
+            time.sleep(wait)
+            continue
+        response.raise_for_status()
+        df = pd.DataFrame(response.json()["daily"])
+        df["city"] = city
+        return df
+    raise RuntimeError(f"Still rate limited for {city} after {retries} attempts")
 
 
 if __name__ == "__main__":
@@ -42,6 +50,7 @@ if __name__ == "__main__":
     for city in LOCATIONS:
         print(f"Fetching {city}...")
         frames.append(fetch_weather(city, START, END))
+        time.sleep(10)  # pause between cities
     data = pd.concat(frames, ignore_index=True)
     data.to_csv("data/raw/weather_raw.csv", index=False)
     print(f"Saved {len(data)} rows up to {END}")
