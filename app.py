@@ -21,7 +21,7 @@ df = load_data()
 
 # Title
 st.title("UK Historical Weather Trends")
-st.caption("Daily data 2015-2025 | Source: Open-Meteo (CC BY 4.0)")
+st.caption(f"Daily data {df['date'].min():%b %Y} to {df['date'].max():%b %Y} | Source: Open-Meteo (CC BY 4.0)")
 
 # Sidebar filters
 st.sidebar.header("Filters")
@@ -86,7 +86,7 @@ with tab1:
     yearly["anomaly"] = yearly[metric] - yearly["city"].map(baseline)
     fig4 = px.bar(
         yearly, x="year", y="anomaly", color="city", barmode="group",
-        title=f"Difference from 2015-2025 average: {metric_label}",
+        title=f"Difference from long-run average: {metric_label}",
         labels={"anomaly": "Difference from average", "year": "Year"},
     )
     fig4.add_hline(y=0, line_color="grey")

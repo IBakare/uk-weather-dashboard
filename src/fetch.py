@@ -1,5 +1,8 @@
-import requests
+import os
+from datetime import date, timedelta
+
 import pandas as pd
+import requests
 
 URL = "https://archive-api.open-meteo.com/v1/archive"
 
@@ -10,6 +13,11 @@ LOCATIONS = {
     "London": (51.5072, -0.1276),
     "Manchester": (53.4808, -2.2426),
 }
+
+START = "2015-01-01"
+# The archive lags a few days behind, so stop 5 days before today
+END = (date.today() - timedelta(days=5)).isoformat()
+
 
 def fetch_weather(city, start, end):
     lat, lon = LOCATIONS[city]
@@ -27,11 +35,13 @@ def fetch_weather(city, start, end):
     df["city"] = city
     return df
 
+
 if __name__ == "__main__":
+    os.makedirs("data/raw", exist_ok=True)
     frames = []
     for city in LOCATIONS:
         print(f"Fetching {city}...")
-        frames.append(fetch_weather(city, "2015-01-01", "2025-12-31"))
+        frames.append(fetch_weather(city, START, END))
     data = pd.concat(frames, ignore_index=True)
     data.to_csv("data/raw/weather_raw.csv", index=False)
-    print(f"Saved {len(data)} rows")
+    print(f"Saved {len(data)} rows up to {END}")
