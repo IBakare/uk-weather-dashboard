@@ -62,4 +62,4 @@ streamlit run app.py
 Python, Pandas, NumPy, Plotly, Streamlit, Requests
 
 ## Author
-Ifeloluwa Bakare | [[LinkedIn link](https://www.linkedin.com/in/ifeloluwabakare/)]
+Ifeloluwa Bakare | [[LinkedIn](https://www.linkedin.com/in/ifeloluwabakare/)]
